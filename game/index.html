@@ -3,17 +3,133 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Block Dodger</title>
+<title>Solmara — Street Heat</title>
 <style>
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #11141b; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0e1420; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
   #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
-  /* Read aloud, never shown: the status line screen readers announce. */
   #status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .hidden { display: none !important; }
+  #hud { position: fixed; inset: 0; pointer-events: none; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.8); z-index: 5; }
+  #hud-top-right { position: absolute; top: 14px; right: 18px; text-align: right; }
+  #hud-cash { font-size: 30px; font-weight: 800; color: #7dff8a; }
+  #hud-stars { font-size: 24px; letter-spacing: 2px; color: #ffd23e; }
+  #hud-stars.hot { color: #ff5a4e; }
+  #hud-objective { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); max-width: 560px; text-align: center; font-size: 17px; font-weight: 600; background: rgba(10,16,28,.55); padding: 8px 16px; border-radius: 8px; }
+  #hud-objective-time { color: #ffd23e; font-weight: 800; }
+  #hud-bottom-left { position: absolute; left: 16px; bottom: 16px; }
+  #hud-minimap { border: 2px solid rgba(255,255,255,.75); border-radius: 50%; background: #223; box-shadow: 0 2px 12px rgba(0,0,0,.5); }
+  #hud-health { margin-top: 8px; width: 184px; }
+  #hud-health-bar { height: 10px; background: rgba(0,0,0,.55); border-radius: 5px; overflow: hidden; }
+  #hud-health-fill { height: 100%; width: 100%; background: #57d977; border-radius: 5px; }
+  #hud-health-fill.low { background: #ff5a4e; }
+  #hud-health-text { font-size: 12px; font-weight: 700; }
+  #hud-weapon { font-size: 13px; font-weight: 700; color: #ffd23e; margin-top: 2px; }
+  #hud-speed { position: absolute; right: 20px; bottom: 18px; font-size: 34px; font-weight: 800; }
+  #hud-feed { position: absolute; left: 16px; bottom: 260px; max-width: 420px; }
+  .feed-item { background: rgba(10,16,28,.65); padding: 7px 12px; border-radius: 6px; margin-top: 6px; font-size: 14px; }
+  #hud-crosshair { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; }
+  #hud-crosshair::before, #hud-crosshair::after { content: ""; position: absolute; background: #fff; }
+  #hud-crosshair::before { left: 10px; top: 0; width: 2px; height: 22px; }
+  #hud-crosshair::after { left: 0; top: 10px; width: 22px; height: 2px; }
+  #hud-vignette { position: fixed; inset: 0; pointer-events: none; box-shadow: inset 0 0 120px 40px rgba(255,0,0,0); z-index: 6; }
+  #hud-vignette.flash { animation: dmg .45s ease-out; }
+  @keyframes dmg { 0% { box-shadow: inset 0 0 120px 40px rgba(255,0,0,.55); } 100% { box-shadow: inset 0 0 120px 40px rgba(255,0,0,0); } }
+  .screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(8,12,22,.72); z-index: 10; color: #fff; }
+  .panel { max-width: 620px; width: 92%; background: rgba(14,20,34,.92); border: 1px solid rgba(255,210,62,.35); border-radius: 14px; padding: 28px 34px; box-shadow: 0 10px 60px rgba(0,0,0,.6); }
+  .panel h1 { margin: 0 0 4px; font-size: 46px; letter-spacing: 2px; color: #ffd23e; }
+  .panel h1 .sub { display: block; font-size: 20px; letter-spacing: 6px; color: #7fd4ff; }
+  .panel h2 { margin: 0 0 10px; font-size: 34px; color: #ffd23e; }
+  .panel p { line-height: 1.55; color: #dfe6f0; }
+  .panel .controls { font-size: 14px; line-height: 1.9; color: #b9c4d4; }
+  .panel .controls b { color: #fff; }
+  .btn { display: inline-block; pointer-events: auto; cursor: pointer; border: none; border-radius: 8px; padding: 12px 26px; margin: 6px 8px 0 0; font-size: 17px; font-weight: 700; color: #101623; background: #ffd23e; }
+  .btn:hover { background: #ffe27a; }
+  .btn.ghost { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.5); }
+  .mission-row { padding: 7px 10px; border-radius: 6px; color: #b9c4d4; }
+  .mission-row.done { color: #57d977; }
+  .mission-row.next { color: #ffd23e; background: rgba(255,210,62,.12); font-weight: 700; }
+  #save-note { font-size: 13px; color: #8fa0b5; margin-top: 10px; }
 </style>
 </head>
 <body>
-<canvas id="game" aria-label="Block Dodger: move the paddle left and right to dodge falling blocks and catch coins"></canvas>
+<canvas id="game" aria-label="Solmara: an open-world crime game. Drive, steal cars, outrun the police and run missions for Vera Solano."></canvas>
 <p id="status" role="status" aria-live="polite"></p>
+
+<div id="hud">
+  <div id="hud-top-right">
+    <div id="hud-cash">$250</div>
+    <div id="hud-stars">☆☆☆☆☆</div>
+  </div>
+  <div id="hud-objective"><span id="hud-objective-text"></span> <span id="hud-objective-time"></span></div>
+  <div id="hud-bottom-left">
+    <canvas id="hud-minimap" width="184" height="184"></canvas>
+    <div id="hud-health">
+      <div id="hud-health-bar"><div id="hud-health-fill"></div></div>
+      <span id="hud-health-text">100</span> <span id="hud-weapon">Fists</span>
+    </div>
+  </div>
+  <div id="hud-speed"></div>
+  <div id="hud-feed"></div>
+  <div id="hud-crosshair" class="hidden"></div>
+</div>
+<div id="hud-vignette"></div>
+
+<div id="screen-title" class="screen">
+  <div class="panel">
+    <h1>SOLMARA<span class="sub">STREET HEAT</span></h1>
+    <p>Sun, sea, and everybody owes somebody. Dario "Dash" Cole came to Solmara with a duffel
+    bag and a debt. Vera Solano runs the garage on the north side and needs a driver who asks
+    no questions. Kane Mercer runs the docks — and he does not like new faces.</p>
+    <p class="controls">
+      <b>WASD</b> move &nbsp;·&nbsp; <b>Shift</b> run &nbsp;·&nbsp; <b>Space</b> jump / handbrake<br>
+      <b>Mouse drag</b> look around &nbsp;·&nbsp; <b>E</b> enter / steal car, start mission<br>
+      <b>Click</b> punch / shoot &nbsp;·&nbsp; <b>1 / 2</b> switch fists / pistol<br>
+      <b>Esc</b> pause &nbsp;·&nbsp; <b>M</b> mute &nbsp;·&nbsp; progress saves automatically
+    </p>
+    <button id="btn-new" class="btn">New Game</button>
+    <button id="btn-continue" class="btn ghost">Continue</button>
+  </div>
+</div>
+
+<div id="screen-pause" class="screen hidden">
+  <div class="panel">
+    <h2>Paused</h2>
+    <div id="mission-list"></div>
+    <button id="btn-resume" class="btn">Resume</button>
+    <button id="btn-mission" class="btn ghost">Start Next Mission</button>
+    <button id="btn-quit" class="btn ghost">Quit to Title</button>
+    <div id="save-note"></div>
+  </div>
+</div>
+
+<div id="screen-busted" class="screen hidden">
+  <div class="panel">
+    <h2>BUSTED</h2>
+    <p>The Solmara PD caught up with you. They took a $200 fine and your freedom for the
+    afternoon — but the city is still yours to take back.</p>
+    <button id="btn-busted" class="btn">Back on the Street</button>
+  </div>
+</div>
+
+<div id="screen-wasted" class="screen hidden">
+  <div class="panel">
+    <h2>WASTED</h2>
+    <p>Solmara chewed you up. You wake up patched up at the safehouse, $150 lighter, and
+    very much still in the game.</p>
+    <button id="btn-wasted" class="btn">Back on the Street</button>
+  </div>
+</div>
+
+<div id="screen-story" class="screen hidden">
+  <div class="panel">
+    <h2>SOLMARA IS YOURS</h2>
+    <p>Vera owns the docks, Mercer is finished, and the Comet GT is yours. The story is
+    complete — the city stays open. Keep driving.</p>
+    <button id="btn-story" class="btn">Keep Playing</button>
+  </div>
+</div>
+
+<script src="./vendor/three.min.js"></script>
 <script type="module" src="./src/main.js"></script>
 </body>
 </html>

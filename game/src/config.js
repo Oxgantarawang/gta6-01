@@ -1,61 +1,61 @@
-// Every tuning number and colour in one place. The playfield is a fixed 1280x720 logical area;
-// the renderer scales it to the window, so no rule below depends on the screen size.
-
-export const FIELD = { width: 1280, height: 720, groundY: 664 };
-
-/** The simulation's fixed step, in seconds: 60 updates a second whatever the display's rate. */
+// Every tuning number and shared constant in one place. Solmara is a grid city: roads run
+// north-south and east-west on a fixed pitch, blocks hold the buildings, and the south edge
+// is a beach where the grid meets the sea.
 export const STEP = 1 / 60;
+export const SAVE_KEY = 'solmara.save.v1';
+
+export const CITY = {
+  pitch: 78,          // road centre to road centre
+  roadHalf: 7,        // half the asphalt width
+  roads: [-2, -1, 0, 1, 2], // road indices each way
+  blockHalf: 30,      // half a buildable block (pitch - road width, halved, minus margin)
+  beachZ: 196,        // sand starts here (south, +z)
+  waterZ: 232,        // sea starts here
+  extent: 205,        // city ground plane half-size
+};
 
 export const PLAYER = {
-  width: 72,
-  height: 24,
-  speed: 560,
-  invulnerable: 1.5,
+  walkSpeed: 5.2,
+  runSpeed: 9.0,
+  jumpSpeed: 7.5,
+  gravity: 22,
+  radius: 0.55,
+  height: 1.8,
+  maxHealth: 100,
+  punchDamage: 12,
+  pistolDamage: 34,
+  pistolRange: 55,
+  pistolCooldown: 0.28,
 };
 
-export const LIVES = 3;
-
-export const BLOCK = {
-  minWidth: 40,
-  maxWidth: 110,
-  height: 36,
-  speed: 240,
-  speedPerLevel: 30,
-  speedJitter: 90,
-  interval: 0.55,
-  intervalScale: 0.88,
-  minInterval: 0.14,
-  dodgePoints: 1,
+export const CAR_TYPES = {
+  comet:   { name: 'Comet GT',   topSpeed: 34, accel: 16, brake: 30, turn: 2.1, seats: 2, price: 0 },
+  bison:   { name: 'Bison',      topSpeed: 26, accel: 12, brake: 26, turn: 1.9, seats: 4, price: 0 },
+  mule:    { name: 'Mule Van',   topSpeed: 21, accel: 9,  brake: 22, turn: 1.6, seats: 2, price: 0 },
+  cab:     { name: 'Sol Cab',    topSpeed: 25, accel: 12, brake: 26, turn: 1.9, seats: 4, price: 0 },
+  cruiser: { name: 'Interceptor',topSpeed: 32, accel: 15, brake: 30, turn: 2.2, seats: 4, price: 0 },
 };
 
-export const COIN = {
-  size: 24,
-  speed: 190,
-  speedPerLevel: 14,
-  interval: 1.4,
-  intervalJitter: 0.8,
-  points: 10,
+export const WANTED = {
+  maxStars: 5,
+  decayDelay: 12,     // seconds unseen before a star drops
+  bustRange: 2.2,     // a cop this close for bustTime seconds busts the player
+  bustTime: 1.6,
+  policeCars: [0, 1, 2, 3, 4, 5], // police cars on the road per star level
 };
-
-/** Seconds of play per level, and the last level: speeds and spawn rates stop growing there. */
-export const LEVEL = { seconds: 12, max: 12 };
-
-/** How many falling things can exist at once; the pool is allocated once, at boot. */
-export const POOL_SIZE = 64;
 
 export const PALETTE = {
-  backdrop: '#11141b',
-  sky: '#1b1f2a',
-  ground: '#2a3040',
-  player: '#4fc3f7',
-  block: '#e5534b',
-  coin: '#f2c94c',
-  panel: '#252b38',
-  text: '#eef1f5',
-  muted: '#8b93a3',
+  sky: 0x87bfe8,
+  fog: 0xa8c8e0,
+  sun: 0xfff2d8,
+  asphalt: 0x3a3f46,
+  sidewalk: 0x9aa0a3,
+  sand: 0xe8d29a,
+  sea: 0x2f7fb8,
+  grass: 0x5f9e4d,
+  building: [0xd8c9b0, 0xb8c4cc, 0xc9a689, 0x8fa3b5, 0xe0d6c2, 0xa89a86, 0x7f93a8],
+  glass: 0x2b3f55,
 };
 
-export const FONT = 'system-ui, -apple-system, "Segoe UI", sans-serif';
-
-/** Where the best score is kept between visits (this browser only). */
-export const BEST_KEY = 'block-dodger.best';
+export const MISSION_CASH = { start: 0 };
+export const START_CASH = 250;
