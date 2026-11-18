@@ -190,7 +190,11 @@ export function createCity(scene, seed) {
   roof.rotation.y = Math.PI / 4; roof.castShadow = true; scene.add(roof);
   colliders.push({ minX: locations.safehouse.x - 6, maxX: locations.safehouse.x + 6, minZ: locations.safehouse.z - 5, maxZ: locations.safehouse.z + 5 });
 
-  // Docks: warehouse + stacked containers on the east edge.
+  // Docks: concrete apron under the warehouse and containers, so the docks read as a
+  // working port instead of grass. East of the last road (x=156), so it covers no road.
+  const docksApron = new THREE.Mesh(new THREE.PlaneGeometry(56, 120), walkMat);
+  docksApron.rotation.x = -Math.PI / 2; docksApron.position.set(218, 0.02, 0);
+  docksApron.receiveShadow = true; scene.add(docksApron);
   const wareMat = new THREE.MeshLambertMaterial({ color: 0x5a6b7a });
   addBox(wareMat, 214, 7, -40, 24, 14, 30);
   colliders.push({ minX: 202, maxX: 226, minZ: -55, maxZ: -25 });
